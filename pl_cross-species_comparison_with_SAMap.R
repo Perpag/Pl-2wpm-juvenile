@@ -1,85 +1,32 @@
-library(Seurat)
-library(pheatmap)
-library(tidyverse)
-library(cowplot)
-library(dplyr)
-library(viridis)
-library(ggalluvial)
-library(networkD3)
-library(dplyr)
-library(ggplot2)
+#For Samap analysis
+#In R studio
+
 library(reshape2)
 library(Seurat)
 library(SeuratData)
 library(SeuratDisk)
 
-pm<-pm_ovary_integrated_umap
-sp<-sp_ovary
-spl<-sp_3dpf_integrated_umap
-dm<-dm_ovary
-dr<-dr_ovary
-hs<-hs_ovary
-mm<-mm_ovary
-mm_pg<-pg_integrated
+pl<-pljuv_integrated_umap
+sp<-sp_3dpf_integrated_umap
 
-pm[["RNA3"]] <- as(object = pm[["RNA"]], Class = "Assay")
-DefaultAssay(pm) <- "RNA3"
-pm[["RNA"]] <- NULL
-pm <- RenameAssays(object = pm, RNA3 = 'RNA')
-SaveH5Seurat(pm, filename = "pm_ovary.h5Seurat")
-Convert("pm_ovary.h5Seurat", dest = "h5ad")
+
+pl[["RNA3"]] <- as(object = pl[["RNA"]], Class = "Assay")
+DefaultAssay(pl) <- "RNA3"
+pl[["RNA"]] <- NULL
+pl <- RenameAssays(object = pl, RNA3 = 'RNA')
+SaveH5Seurat(pl, filename = "pljuv.h5Seurat")
+Convert("pljuv.h5Seurat", dest = "h5ad")
 
 sp[["RNA3"]] <- as(object = sp[["RNA"]], Class = "Assay")
 DefaultAssay(sp) <- "RNA3"
 sp[["RNA"]] <- NULL
 sp <- RenameAssays(object = sp, RNA3 = 'RNA')
-SaveH5Seurat(sp, filename = "sp_adult_ovary.h5Seurat")
-Convert("sp_adult_ovary.h5Seurat", dest = "h5ad")
-
-spl[["RNA3"]] <- as(object = spl[["RNA"]], Class = "Assay")
-DefaultAssay(spl) <- "RNA3"
-spl[["RNA"]] <- NULL
-spl <- RenameAssays(object = spl, RNA3 = 'RNA')
-SaveH5Seurat(spl, filename = "sp_3df_larva.h5Seurat")
-Convert("sp_3df_larva.h5Seurat", dest = "h5ad")
-
-mm[["RNA3"]] <- as(object = mm[["RNA"]], Class = "Assay")
-DefaultAssay(mm) <- "RNA3"
-mm[["RNA"]] <- NULL
-mm <- RenameAssays(object = mm, RNA3 = 'RNA')
-SaveH5Seurat(mm, filename = "mm_adult_ovary.h5Seurat")
-Convert("mm_adult_ovary.h5Seurat", dest = "h5ad")
-
-dr[["RNA3"]] <- as(object = dr[["RNA"]], Class = "Assay")
-DefaultAssay(dr) <- "RNA3"
-dr[["RNA"]] <- NULL
-dr <- RenameAssays(object = dr, RNA3 = 'RNA')
-SaveH5Seurat(dr, filename = "dr_adult_ovary.h5Seurat")
-Convert("dr_adult_ovary.h5Seurat", dest = "h5ad")
-
-dm[["RNA3"]] <- as(object = dm[["RNA"]], Class = "Assay")
-DefaultAssay(dm) <- "RNA3"
-dm[["RNA"]] <- NULL
-dm <- RenameAssays(object = dm, RNA3 = 'RNA')
-SaveH5Seurat(dm, filename = "dm_adult_ovary.h5Seurat")
-Convert("dm_adult_ovary.h5Seurat", dest = "h5ad")
-
-hs[["RNA3"]] <- as(object = hs[["RNA"]], Class = "Assay")
-DefaultAssay(hs) <- "RNA3"
-hs[["RNA"]] <- NULL
-hs <- RenameAssays(object = hs, RNA3 = 'RNA')
-SaveH5Seurat(hs, filename = "hs_fetal_ovary.h5Seurat")
-Convert("hs_fetal_ovary.h5Seurat", dest = "h5ad")
-
-mm[["RNA3"]] <- as(object = mm[["RNA"]], Class = "Assay")
-DefaultAssay(mm) <- "RNA3"
-mm[["RNA"]] <- NULL
-hs <- RenameAssays(object = mm, RNA3 = 'RNA')
-SaveH5Seurat(mm, filename = "mm_pituitary_gland.h5Seurat")
-Convert("mm_pituitary_gland.h5Seurat", dest = "h5ad")
-
+SaveH5Seurat(sp, filename = "sp3dpf.h5Seurat")
+Convert("sp3dpf.h5Seurat", dest = "h5ad")
 
 #In python
+
+cd samap_directory
 
 python3
 
@@ -91,12 +38,12 @@ from samap.analysis import (get_mapping_scores, GenePairFinder,
 from samalg import SAM
 import pandas as pd
 
-% bash map_genes.sh --tr1 /directory of P.miniata proteome fasta file --t1 prot --n1 pm --tr2 //directory of species tested proteome fasta file --t2 prot --n2 xx #xx= spl or dm or dr or hs or mm or sp or mm_pg depending on the comparison
+% bash map_genes.sh --tr1 /directory of P.lividus proteome fasta file --t1 prot --n1 pl --tr2 //directory of S. purpuratus proteome fasta file --t2 prot --n2 sp
 
-fn1 = "directory of pm_ovary.h5ad"
-fn2 = "directory of species compared to"
+fn1 = "directory of pljuv.h5ad"
+fn2 = "directory of sp3dpf.h5ad"
 
-filenames = {'pm':fn1,'xx':fn2} #xx= spl or dm or dr or hs or mm or sp or mm_pg depending on the comparison
+filenames = {'pl':fn1,'sp':fn2} 
 
 sm = SAMAP(
   filenames,
@@ -106,46 +53,65 @@ sm = SAMAP(
 
 sm.run(pairwise=True)
 samap = sm.samap # SAM object with 2 species stitched together
-keys = {'pm':'seurat_clusters','xx':'seurat_clusters'} #xx= spl or dm or dr or hs or mm or sp or mm_pg depending on the comparison
+keys = {'pl':'seurat_clusters','sp':'seurat_clusters'}
 D,MappingTable = get_mapping_scores(sm,keys,n_top = 0)
 D.head()
 df = MappingTable
 
 print(df)
 
-df.to_csv('mapping_table_sea_star_vs_x_species.csv')
+df.to_csv('mapping table Pl 2wpm juvenile_sp_3dpf_larva.csv')
 
-#In R Studio
 
-df <- load mapping scores
+
+#SAMAP for Pl object with merged neuronal clusters into one
+
+cd samap_directory
+python3
+
+from samap.mapping import SAMAP
+from samap.analysis import (get_mapping_scores, GenePairFinder,
+                            sankey_plot, chord_plot, CellTypeTriangles, 
+                            ParalogSubstitutions, FunctionalEnrichment,
+                            convert_eggnog_to_homologs, GeneTriangles)
+from samalg import SAM
+import pandas as pd
+
+
+fn1 = "/Users/periklespaganos/Downloads/Juvenile_paper submission/SAMap_Pl_juvenile vs Sp_larva files/h5ad_files/pljuv_merged_neurons.h5ad"
+fn2 = "/Users/periklespaganos/Downloads/Juvenile_paper submission/SAMap_Pl_juvenile vs Sp_larva files/h5ad_files/sp3df.h5ad"
+filenames = {'pl':fn1,'sp':fn2}
+
+sm = SAMAP(
+  filenames,
+  f_maps = 'example_data/maps/',
+  save_processed=True #if False, do not save the processed results to `*_pr.h5ad`
+)
+
+sm.run(pairwise=True)
+samap = sm.samap # SAM object with 2 species stitched together
+
+keys = {'sp':'seurat_clusters','pl':'merged_clusters'}
+
+D,MappingTable = get_mapping_scores(sm,keys,n_top = 0)
+D.head()
+df = MappingTable
+
+print(df)
+
+df.to_csv('mapping table Pl merged_neurons_sp_3dpf_larva.csv')
+
+
+# Plotting of the mapping tables as heatmaps In R Studio
+library(ggplot2)
+library(reshape2)
+
+#load mapping table (df)
+
 data1 <- melt(df)
 data1$X <- as.factor(data1$X)
+levels(data1$X)
+data1$X <- factor(data1$X, levels = levels(data1$X)[c(7,4,1, 13, 21, 14, 9, 8, 11, 5, 16, 3, 12, 15, 17, 18, 19, 2, 6, 10, 20)])
 
-threshold <- 0.1  # threshold value
-data1 <- filter(data1, data1$value >= threshold)
-
-# Transform the data for ggalluvial
-alluvial_data <- data1 %>%
-  mutate(species1 = factor(data1$X, levels = unique(data1$X)),
-         species2 = factor(data1$variable, levels = unique(data1$variable)))
-
-ggplot(alluvial_data,
-       aes(axis1 = species1, axis2 = species2, y = data1$value)) +
-  geom_alluvium(aes(fill = data1$value), width = 0.25) +
-  geom_stratum(width = 0.25, fill = "white", color = "black") +
-  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
-  scale_x_discrete(limits = c("Species 1", "Species 2"), expand = c(0.15, 0.05)) +
-  scale_fill_gradient(low = "lightblue", high = "blue", name = "Alignment Score")+
-  theme_minimal()+theme(
-    panel.grid.major = element_blank(),  # Remove major grid lines
-    panel.grid.minor = element_blank()   # Remove minor grid lines
-  )+theme(
-    axis.text.x = element_blank(),  # Remove x-axis labels
-    axis.ticks.x = element_blank(), # Remove x-axis ticks
-    axis.text.y = element_blank(),  # Remove y-axis labels
-    axis.ticks.y = element_blank()  # Remove y-axis ticks
-  )
-
-ggsave("Sankey_plot_pm_ovary_vs_x species.tiff", units="in", width=12, height=13
-       , dpi=300, compression = 'lzw')
-
+ggplot(data1, aes(x = X, y = variable, fill = value)) +geom_tile(color = "black") +scale_fill_gradient2(low = "blue", mid = "#FFFFCC",high = "#FF0000", midpoint = 0.25)+coord_fixed() +guides(fill = guide_colourbar(title = "Alignment score"))+labs(x = "Strongylocentrotus purpuratus 3 dpf larva", y = "Paracentrotus lividus 2wpm") +RotatedAxis()
+ggsave("asadultntop0.tiff", units="in", width=9, height=9, dpi=300, compression = 'lzw')
