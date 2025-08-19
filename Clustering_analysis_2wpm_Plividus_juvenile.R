@@ -17,9 +17,6 @@ library(reshape2)
 library(ggplot2)
 library(tidyr)
 
-
-
-
 set.seed(255)
 
 #merging datasets (no integration)
@@ -404,7 +401,6 @@ z_scores <- scale(avg_exp_t)
 z_scores_long <- melt(z_scores)
 colnames(z_scores_long) <- c("Cluster", "Gene", "Zscore")
 
-
 ggplot(z_scores_long, aes(x = Gene, y = Cluster, fill = Zscore)) +
   geom_tile() +
   scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
@@ -413,7 +409,6 @@ ggplot(z_scores_long, aes(x = Gene, y = Cluster, fill = Zscore)) +
   theme(axis.text.y  = element_text(angle = 0, hjust = 1, size = 15)) +theme(axis.text.x  = element_text(angle = 0, hjust = 0.5, size = 15)) +coord_flip()+ scale_x_discrete(labels=skeleton_ids)+scale_y_discrete(labels=celltype)
 
 ggsave("heatmap_of_interest.tiff", units="in", width=18, height=9, dpi=300, compression = 'lzw')
-
 
 #zscore for Fig. 5
 
@@ -468,7 +463,6 @@ ggplot(zscore_long, aes(x = Gene, y = Cluster, fill = Zscore)) +
 
 ggsave("neurons_zscoree.tiff", units="in", width=9, height=8, dpi=300, compression = 'lzw')
 
-
 #merging of all neurons into one cluster 
 pljuv_merged_neurons<-pljuv_integrated_umap
 Idents(pljuv_merged_neurons) <- as.character(Idents(pljuv_merged_neurons))
@@ -480,4 +474,3 @@ pljuv_merged_neurons$merged_clusters <- new_ids
 Idents(pljuv_merged_neurons) <- "merged_clusters"
 table(Idents(pljuv_merged_neurons))        
 DimPlot(pljuv_merged_neurons, label = TRUE)
-
