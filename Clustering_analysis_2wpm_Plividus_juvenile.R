@@ -11,8 +11,18 @@ library(treeio)
 library(tidytree)
 library(bioDist)
 library(svglite)
+library(SeuratWrappers)
+library(patchwork)
+library(reshape2)
+library(ggplot2)
+library(tidyr)
+
+
+
+
 set.seed(255)
 
+#merging datasets (no integration)
 #Create Seurat objects
 
 #1
@@ -21,7 +31,7 @@ pljuv_1_barcodes <- read.delim(file = "./pljuv_1/barcodes.tsv", stringsAsFactors
 pljuv_1 <- CreateSeuratObject(pljuv_1.data, project = "pljuv_1", min.cells = 3, min.features = , meta.data = rownames(pljuv_1_barcodes$v1)) #check values for cells and features
 
 VlnPlot(pljuv_1, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2)
-pljuv_1- subset(pljuv_1, subset = nFeature_RNA > 350 & nFeature_RNA < 5000)
+pljuv_1<- subset(pljuv_1, subset = nFeature_RNA > 350 & nFeature_RNA < 5000)
 
 #2
 pljuv_2.data <- Read10X(data.dir = "./pljuv_2")
@@ -29,7 +39,7 @@ pljuv_2_barcodes <- read.delim(file = "./pljuv_2/barcodes.tsv", stringsAsFactors
 pljuv_2 <- CreateSeuratObject(pljuv_2.data, project = "pljuv_2", min.cells = 3, min.features = , meta.data = rownames(pljuv_2_barcodes$v1)) #check values for cells and features
 
 VlnPlot(pljuv_2, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2)
-pljuv_2- subset(pljuv_2, subset = nFeature_RNA > 500 & nFeature_RNA < 5000)
+pljuv_2<- subset(pljuv_2, subset = nFeature_RNA > 500 & nFeature_RNA < 5000)
 
 #3
 pljuv_3.data <- Read10X(data.dir = "./pljuv_3") #They call genes.tsv file barcode file for some reason, if its not present
@@ -37,7 +47,100 @@ pljuv_3_barcodes <- read.delim(file = "./pljuv_3/barcodes.tsv", stringsAsFactors
 pljuv_3 <- CreateSeuratObject(pljuv_3.data, project = "pljuv_3", min.cells = 3, min.features = , meta.data = rownames(pljuv_3_barcodes$v1)) #check values for cells and features
 
 VlnPlot(pljuv_3, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2)
-pljuv_3- subset(pljuv_3, subset = nFeature_RNA > 500 & nFeature_RNA < 5000)
+pljuv_3<- subset(pljuv_3, subset = nFeature_RNA > 500 & nFeature_RNA < 5000)
+
+pljuv_1 <- RenameCells(pljuv_1, add.cell.id = "pljuv_1")
+pljuv_2 <- RenameCells(pljuv_2, add.cell.id = "pljuv_2")
+pljuv_3 <- RenameCells(pljuv_3, add.cell.id = "pljuv_3")
+
+pljuv_merged <- merge(pljuv_1, y = c(pljuv_2, pljuv_3), 
+                add.cell.ids = c("pljuv_1", "pljuv_2", "pljuv_3"), 
+                project = "pljuv_merged")
+
+pljuv_merged <- NormalizeData(pljuv_merged)
+pljuv_merged <- FindVariableFeatures(pljuv_merged, selection.method = "vst",
+                               nfeatures = 2000,
+                               verbose = FALSE)
+pljuv_merged <- ScaleData(pljuv_merged)
+pljuv_merged <- RunPCA(pljuv_merged,features = VariableFeatures(object = pljuv_merged))
+
+pljuvj<-JackStraw(pljuv_merged, reduction = "pca", assay = NULL, dims = 50,
+               num.replicate = 100, prop.freq = 0.01, verbose = TRUE,
+               maxit = 1000)
+ScoreJackStraw(pljuvj, reduction = "pca", dims = 1:50,
+               score.thresh = 1e-05, do.plot = TRUE)
+
+pljuv_merged <- FindNeighbors(object = pljuv_merged, dims = 1:50)
+pljuv_merged<- FindClusters(object = pljuv_merged, resolution = 1)
+
+#UMAP
+pljuv_merged <- RunUMAP(object = pljuv_merged, dims = 1:50)
+DimPlot(pljuv_merged, group.by="orig.ident")
+DimPlot(object = pljuv_merged, reduction = "umap", label = TRUE)
+DimPlot(pljuv_merged, group.by="orig.ident", split.by = "orig.ident")
+
+pljuv_merged<- RenameIdents(object = pljuv_merged, `35` = "36 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `34` = "35 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `33` = "34 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `32` = "33 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `31` = "32 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `30` = "31 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `29` = "30 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `28` = "29 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `27` = "28 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `26` = "27 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `25` = "26 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `24` = "25 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `23` = "24 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `22` = "23 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `21` = "22 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `20` = "21 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `19` = "20 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `18` = "19 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `17` = "18 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `16` = "17 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `15` = "16 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `14` = "15 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `13` = "14 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `12` = "13 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `11` = "12 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `10` = "11 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `9` = "10 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `8` = "9 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `7` = "8 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `6` = "7 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `5` = "6 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `4` = "5 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `3` = "4 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `2` = "3 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `1` = "2 ")
+pljuv_merged<- RenameIdents(object = pljuv_merged, `0` = "1 ")
+
+#Create Seurat objects for integration
+
+#1
+pljuv_1.data <- Read10X(data.dir = "./pljuv_1")
+pljuv_1_barcodes <- read.delim(file = "./pljuv_1/barcodes.tsv", stringsAsFactors = F, header = F)
+pljuv_1 <- CreateSeuratObject(pljuv_1.data, project = "pljuv_1", min.cells = 3, min.features = , meta.data = rownames(pljuv_1_barcodes$v1)) #check values for cells and features
+
+VlnPlot(pljuv_1, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2)
+pljuv_1<- subset(pljuv_1, subset = nFeature_RNA > 350 & nFeature_RNA < 5000)
+
+#2
+pljuv_2.data <- Read10X(data.dir = "./pljuv_2")
+pljuv_2_barcodes <- read.delim(file = "./pljuv_2/barcodes.tsv", stringsAsFactors = F, header = F)
+pljuv_2 <- CreateSeuratObject(pljuv_2.data, project = "pljuv_2", min.cells = 3, min.features = , meta.data = rownames(pljuv_2_barcodes$v1)) #check values for cells and features
+
+VlnPlot(pljuv_2, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2)
+pljuv_2<- subset(pljuv_2, subset = nFeature_RNA > 500 & nFeature_RNA < 5000)
+
+#3
+pljuv_3.data <- Read10X(data.dir = "./pljuv_3") #They call genes.tsv file barcode file for some reason, if its not present
+pljuv_3_barcodes <- read.delim(file = "./pljuv_3/barcodes.tsv", stringsAsFactors = F, header = F)
+pljuv_3 <- CreateSeuratObject(pljuv_3.data, project = "pljuv_3", min.cells = 3, min.features = , meta.data = rownames(pljuv_3_barcodes$v1)) #check values for cells and features
+
+VlnPlot(pljuv_3, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2)
+pljuv_3<- subset(pljuv_3, subset = nFeature_RNA > 500 & nFeature_RNA < 5000)
 
 pljuv_1 <- RenameCells(pljuv_1, add.cell.id = "pljuv_1")
 pljuv_2 <- RenameCells(pljuv_2, add.cell.id = "pljuv_2")
@@ -123,20 +226,25 @@ pljuv_integrated_umap<- RenameIdents(object = pljuv_integrated_umap, `31` = "3 "
 pljuv_integrated_umap<- RenameIdents(object = pljuv_integrated_umap, `32` = "2 ")
 pljuv_integrated_umap<- RenameIdents(object = pljuv_integrated_umap, `46` = "1 ")
 
-#marker identidication
+#marker genes
 markers <- FindAllMarkers(object = pljuv_integrated_umap, assay = "RNA", only.pos = TRUE, min.pct = 0.01 )
 
-#labelling of cell type groups 
+#top5_marker_genes
+markers <- FindAllMarkers(object = pljuv_integrated, assay = "RNA", only.pos = TRUE, min.pct = 0.01 )
+top5_genes <- markers %>%
+  group_by(cluster) %>%
+  top_n(n = 5, wt = avg_log2FC)
+
+#labeling of cell type groups 
 neurons <- WhichCells(pljuv_integrated_umap, idents = c("1 ", "2 ", "3 ", "4 ", "5 ", "6 ", "7 ", "8 ", "9 ", "10 ", "11 ", "12 ", "13 ", "14 ", "15 ", "16 ", "17 ", "18 ", "19 ", "20 ", "21 ", "22 ", "23 ", "24 ", "25 ", "26 ", "27 ", "28 ", "29 "))                    
 podia_epidermins <- WhichCells(pljuv_integrated_umap, idents = c("30 ","31 ", "32 ", "33 ", "33 "))
-epidermis<- WhichCells(pljuv_integrated_umap, idents = c("34 ", "35 ", "36 ", "37 ", "38"))
+epidermis<- WhichCells(pljuv_integrated_umap, idents = c("34 ", "35 ", "36 ", "37 ", "38 "))
 digestive_tract<- WhichCells(pljuv_integrated_umap, idents = c("39 ", "40 ", "41 "))
 wvs<- WhichCells(pljuv_integrated_umap, idents = c("42 ", "43 ", "44 "))
 skeleton<- WhichCells(pljuv_integrated_umap, idents = "45 ")
 muscles<-WhichCells(pljuv_integrated_umap, idents = "46 ")
 coelomocytes<-WhichCells(pljuv_integrated_umap, idents = c("47 ","48 "))
 DimPlot(pljuv_integrated_umap, label=TRUE, , cells.highlight= list(neurons, podia_epidermins, epidermis, digestive_tract, wvs, skeleton, muscles, coelomocytes), cols.highlight = c("orange", "salmon","pink","#b3a0006d","blue","#3da1ff78","#00bf7661","magenta"), cols= "#be80ff6d")
-
 
 #ClusterTree
 
@@ -206,6 +314,37 @@ gt4 <- gt %<+% pl_juv_meta_tibble_major_clusters +
   scale_colour_gradientn(colours = plasma(n=7, direction = 1)) +
   ggplot2::xlim(0, 0.5)
 
+#nervous system annotation 
+nervous_system<-subset(pljuv_integrated_umap, idents=c("1 ", "2 ", "3 ", "4 ", "5 ", "6 ", "7 ", "8 ", "9 ", "10 ", "11 ", "12 ", "13 ", "14 ", "15 ", "16 ", "17 ", "18 ", "19 ", "20 ", "21 ", "22 ", "23 ", "24 ", "25 ", "26 ", "27 ", "28 ", "29 "))
+nervous_system<- RenameIdents(object = nervous_system, `29 ` = "29. neuropeptidergic (10)")
+nervous_system<- RenameIdents(object = nervous_system, `28 ` = "28. neuropeptidergic (9)")
+nervous_system<- RenameIdents(object = nervous_system, `27 ` = "27. glutamatergic")
+nervous_system<- RenameIdents(object = nervous_system, `26 ` = "26. dopaminergic/noradrenergic")
+nervous_system<- RenameIdents(object = nervous_system, `25 ` = "25. serotonergic/histaminergic (2)")
+nervous_system<- RenameIdents(object = nervous_system, `24 ` = "24. serotonergic (2)")
+nervous_system<- RenameIdents(object = nervous_system, `23 ` = "23. cholinergic (7)")
+nervous_system<- RenameIdents(object = nervous_system, `22 ` = "22. cholinergic (6)")
+nervous_system<- RenameIdents(object = nervous_system, `21 ` = "21. histaminergic (2)")
+nervous_system<- RenameIdents(object = nervous_system, `20 ` = "20. cholinergic (5)")
+nervous_system<- RenameIdents(object = nervous_system, `19 ` = "19. neuropeptidergic (8)")
+nervous_system<- RenameIdents(object = nervous_system, `18 ` = "18. neuropeptidergc (7)")
+nervous_system<- RenameIdents(object = nervous_system, `17 ` = "17. neuropeptidergic (6)")
+nervous_system<- RenameIdents(object = nervous_system, `16 ` = "16. GABAergic/cholinergic")
+nervous_system<- RenameIdents(object = nervous_system, `15 ` = "15. serotonergic/cholinergic")
+nervous_system<- RenameIdents(object = nervous_system, `14 ` = "14. cholinergic (4)")
+nervous_system<- RenameIdents(object = nervous_system, `13 ` = "13. histaminergic (1)")
+nervous_system<- RenameIdents(object = nervous_system, `12 ` = "12. neuropeptidergic (5)")
+nervous_system<- RenameIdents(object = nervous_system, `11 ` = "11. GABAergic")
+nervous_system<- RenameIdents(object = nervous_system, `10 ` = "10. serotonergic (1)")
+nervous_system<- RenameIdents(object = nervous_system, `9 ` = "9. neuropeptidergic (4)")
+nervous_system<- RenameIdents(object = nervous_system, `8 ` = "8. neuropeptidergic (3)")
+nervous_system<- RenameIdents(object = nervous_system, `7 ` = "7. neuropeptidergic (2)")
+nervous_system<- RenameIdents(object = nervous_system, `6 ` = "6. neuropeptidergic (1)")
+nervous_system<- RenameIdents(object = nervous_system, `5 ` = "5. cholinergic (3)")
+nervous_system<- RenameIdents(object = nervous_system, `4 ` = "4. cholinergic (2)")
+nervous_system<- RenameIdents(object = nervous_system, `3 ` = "3. serotonergic/histaminergic (1)")
+nervous_system<- RenameIdents(object = nervous_system, `2 ` = "2. cholinergic (1)")
+nervous_system<- RenameIdents(object = nervous_system, `1 ` = "1. dopaminergic")
 
 #subset PRCs
 nervous_system<-subset(pljuv_integrated_umap, idents=c("1 ", "2 ", "3 ", "4 ", "5 ", "6 ", "7 ", "8 ", "9 ", "10 ", "11 ", "12 ", "13 ", "14 ", "15 ", "16 ", "17 ", "18 ", "19 ", "20 ", "21 ", "22 ", "23 ", "24 ", "25 ", "26 ", "27 ", "28 ", "29 "))
@@ -241,6 +380,7 @@ photoreceptors<- RenameIdents(object = photoreceptors, `3` = "PRCs (4)")
 photoreceptors<- RenameIdents(object = photoreceptors, `2` = "PRCs (3)")
 photoreceptors<- RenameIdents(object = photoreceptors, `1` = "PRCs (2)")
 photoreceptors<- RenameIdents(object = photoreceptors, `0` = "PRCs (1)")
+
 markers <- FindAllMarkers(object = photoreceptors, assay = "RNA", only.pos = TRUE, min.pct = 0.01 )
 photoreceptors<-ScaleData(photoreceptors, rownames(photoreceptors))
 markers %>% group_by(cluster) %>% dplyr::filter(avg_log2FC > 1) %>% slice_head(n = 10) %>% ungroup() -> top10
@@ -248,3 +388,96 @@ DoHeatmap(photoreceptors, features = top10$gene) + NoLegend()+scale_fill_viridis
 
 #Dotplot for genes of interest
 DotPlot(object =pljuv_integrated_umap , features = c(genes of interests), col.min=0, scale.by = "size", cols = c("lightgrey", "blue")) +theme_bw() + theme(axis.text.y  = element_text(angle = 0, hjust = 1, size = 15)) +theme(axis.text.x  = element_text(angle = 0, hjust = 0.5, size = 15))+ scale_x_discrete(labels=c(gene names))+coord_flip()
+
+#Calculation of z-score and heatmaps for Figs. 2, 3 and fig. S6
+
+# Get average expression per cluster
+avg_exp <- AverageExpression(pljuv_integrated_umap, features = genes of interest, return.seurat = FALSE)$RNA
+
+# Transpose so rows are clusters, columns are genes
+avg_exp_t <- t(avg_exp)
+
+# Scale (z-score) the data by gene
+z_scores <- scale(avg_exp_t)
+
+# Convert to long format for ggplot
+z_scores_long <- melt(z_scores)
+colnames(z_scores_long) <- c("Cluster", "Gene", "Zscore")
+
+
+ggplot(z_scores_long, aes(x = Gene, y = Cluster, fill = Zscore)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  theme_minimal() +
+  labs(title = "desired title", fill = "Z-score") +
+  theme(axis.text.y  = element_text(angle = 0, hjust = 1, size = 15)) +theme(axis.text.x  = element_text(angle = 0, hjust = 0.5, size = 15)) +coord_flip()+ scale_x_discrete(labels=skeleton_ids)+scale_y_discrete(labels=celltype)
+
+ggsave("heatmap_of_interest.tiff", units="in", width=18, height=9, dpi=300, compression = 'lzw')
+
+
+#zscore for Fig. 5
+
+# Calculate average expression
+avg_expr <- AverageExpression(nervous_system, features = neuronal_genes, return.seurat = FALSE)$RNA
+
+# Fix: make sure cluster names match Seurat levels exactly
+cluster_levels <- levels(Idents(nervous_system))
+colnames(avg_expr) <- cluster_levels
+
+# Compute z-scores per gene across clusters
+zscore_matrix <- t(scale(t(avg_expr)))
+
+# Identify cluster of peak expression per gene
+gene_peak_info <- data.frame(
+  Gene = rownames(zscore_matrix),
+  PeakCluster = apply(zscore_matrix, 1, function(x) names(which.max(x))),
+  MaxZ = apply(zscore_matrix, 1, max)
+)
+
+# Factorize cluster using Seurat levels
+gene_peak_info$PeakCluster <- factor(gene_peak_info$PeakCluster, levels = cluster_levels)
+
+# Order genes by cluster then by descending z-score
+gene_peak_info <- gene_peak_info %>%
+  arrange(PeakCluster, desc(MaxZ))
+
+# Apply gene ordering
+gene_order <- gene_peak_info$Gene
+zscore_matrix <- zscore_matrix[gene_order, ]
+
+# Long format for plotting
+zscore_df <- as.data.frame(zscore_matrix)
+zscore_df$Gene <- rownames(zscore_df)
+zscore_long <- pivot_longer(zscore_df, cols = -Gene, names_to = "Cluster", values_to = "Zscore")
+
+# Ensure factor levels are set for ordered plotting
+zscore_long$Gene <- factor(zscore_long$Gene, levels = gene_order)
+zscore_long$Cluster <- factor(zscore_long$Cluster, levels = cluster_levels)
+
+# Plot heatmap
+ggplot(zscore_long, aes(x = Gene, y = Cluster, fill = Zscore)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(
+    title = "Z-score Heatmap: Genes Grouped by Peak Cluster",
+    x = "Genes (Grouped by Cluster of Peak Expression)",
+    y = "Cluster") +theme_minimal(base_size = 12) +theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      panel.grid = element_blank()
+    )+ scale_x_discrete(labels=neuronal_ids)
+
+ggsave("neurons_zscoree.tiff", units="in", width=9, height=8, dpi=300, compression = 'lzw')
+
+
+#merging of all neurons into one cluster 
+pljuv_merged_neurons<-pljuv_integrated_umap
+Idents(pljuv_merged_neurons) <- as.character(Idents(pljuv_merged_neurons))
+clusters_to_merge <- c("1 ", "2 ", "3 ", "4 ", "5 ", "6 ", "7 ", "8 ", "9 ", "10 ", "11 ", "12 ", "13 ", "14 ", "15 ", "16 ", "17 ", "18 ", "19 ", "20 ", "21 ", "22 ", "23 ", "24 ", "25 ", "26 ", "27 ", "28 ", "29 ")
+original_ids <- as.character(Idents(pljuv_merged_neurons))
+new_ids <- original_ids
+new_ids[original_ids %in% clusters_to_merge] <- "clusters1_29"
+pljuv_merged_neurons$merged_clusters <- new_ids
+Idents(pljuv_merged_neurons) <- "merged_clusters"
+table(Idents(pljuv_merged_neurons))        
+DimPlot(pljuv_merged_neurons, label = TRUE)
+
